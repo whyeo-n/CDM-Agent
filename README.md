@@ -1,10 +1,10 @@
-# Clinical Data Management MCP Server
+# CDM Agent
 
-A unified MCP (Model Context Protocol) server for automating Clinical Data Manager (CDM) workflows. Provides Excel comparison, DVS validation, PDF comparison, and more through any MCP-compatible AI agent.
+A unified MCP (Model Context Protocol) server for automating Clinical Data Manager (CDM) workflows. Provides Excel comparison, DVS validation, Blank eCRF PDF comparison, DB Spec validation, SOP log verification, and more through any MCP-compatible AI agent. Published on PyPI as [`cdm-agent`](https://pypi.org/project/cdm-agent/).
 
 ---
 
-## Available Tools
+## Available Tools (13)
 
 ### Excel & DB Spec
 
@@ -31,6 +31,11 @@ A unified MCP (Model Context Protocol) server for automating Clinical Data Manag
 
 - **validate_db_spec**: Validates a DB Specification Excel file against CDASH standards (CDASHIG v2.3 / SDTMIG v3.4). Runs three checks: domain validity, ITEM ID suffix vs. DB TYPE consistency, and CODE field duplicate code numbers. Generates an Excel validation report with per-check result sheets and a summary.
 - **generate_cdash_variables**: Generates or updates the CDASH variables JSON reference from a CDASH Model Excel file. Use this when a new version of the CDASH Model is released. Supports merge mode to add new entries without replacing existing data.
+
+### SOP Documents
+
+- **list_dm_documents**: Reads Appendix entries from an SOP Log Excel file and lists the matching signed PDF documents found recursively in a target folder. The Excel report flags documents found only in Working folders and missing signed documents.
+- **verify_sop_log**: Compares the SOP Log Excel against the SOP Index PDF and reports version and effective date discrepancies for both SOP and Appendix entries.
 
 ---
 
@@ -61,13 +66,13 @@ Follow the section for your AI agent. Each section covers registration, skill in
 **Register the MCP server**
 
 ```bash
-claude mcp add --scope user cdm-server uvx cdm-mcp-server@latest
+claude mcp add --scope user cdm-agent uvx cdm-agent@latest
 ```
 
-**Install skills** (optional)
+**Install skills** (optional — document review, translation, revision history)
 
 ```bash
-uvx --from cdm-mcp-server cdm-install-skills --tool claude
+uvx --from cdm-agent cdm-install-skills --tool claude
 ```
 
 Skills are installed into `.claude/skills/` in your project directory.
@@ -104,13 +109,13 @@ nvm use lts
 
 ```bash
 npm install -g @google/gemini-cli
-gemini mcp add cdm-server uvx --args cdm-mcp-server@latest --scope user
+gemini mcp add cdm-agent uvx --args cdm-agent@latest --scope user
 ```
 
-**Install skills** (optional)
+**Install skills** (optional — document review, translation, revision history)
 
 ```bash
-uvx --from cdm-mcp-server cdm-install-skills --tool gemini
+uvx --from cdm-agent cdm-install-skills --tool gemini
 ```
 
 Skills are installed into `.gemini/skills/` in your project directory.
@@ -128,13 +133,13 @@ gemini mcp list
 **Register the MCP server**
 
 ```bash
-codex mcp add cdm-server -- uvx cdm-mcp-server@latest
+codex mcp add cdm-agent -- uvx cdm-agent@latest
 ```
 
-**Install skills** (optional)
+**Install skills** (optional — document review, translation, revision history)
 
 ```bash
-uvx --from cdm-mcp-server cdm-install-skills --tool codex
+uvx --from cdm-agent cdm-install-skills --tool codex
 ```
 
 Skills are installed into `.agents/skills/` in your project directory.
@@ -147,14 +152,22 @@ codex mcp list
 
 ---
 
-You should see `cdm-server` listed as connected.
+You should see `cdm-agent` listed as connected.
+
+> **Set up skills and agent config files together**
+>
+> `cdm-init` installs the bundled skills and the CDM workflow rules (`.claude/rules/cdm-domain.md`, `GEMINI.md`, `AGENTS.md`) into your project directory. Existing files are never overwritten.
+>
+> ```bash
+> uvx --from cdm-agent cdm-init --tool claude   # or gemini / codex / --all
+> ```
 
 > **Install skills for all agents at once**
 >
 > If you use multiple AI tools in the same project directory, run:
 >
 > ```bash
-> uvx --from cdm-mcp-server cdm-install-skills --all
+> uvx --from cdm-agent cdm-install-skills --all
 > ```
 
 ---
@@ -207,18 +220,31 @@ Then restart the AI tool and verify the connection again.
 
 ```
 src/
-└── cdm_mcp_server/
+└── cdm_agent/
     ├── __init__.py
-    ├── server.py                   # MCP server entry point
+    ├── server.py                   # MCP server entry point (13 tools)
+    ├── install_skills.py           # cdm-install-skills CLI
+    ├── init_agent.py               # cdm-init CLI (skills + agent config files)
+    ├── agent_configs/              # Workflow rules for Claude Code / Gemini CLI / Codex CLI
+    ├── skills/                     # cdm-review, cdm-translate, cdm-revision
+    ├── data/
+    │   └── cdash_variables.json    # CDASH variables reference
     ├── templates/
-    │   └── DM Timeline 20251120.xlsx  # Bundled Timeline template
+    │   ├── DVS_SPEC_GRAMMAR.md     # DVS Specification grammar reference
+    │   └── Timeline for Clinical Data Manager_2026Q1.xlsx
     └── modules/
         ├── excel_theme.py          # Shared Excel formatting standards
         ├── excel_compare.py        # Excel & DB Spec comparison engine
         ├── excel_info.py           # Excel structure inspector
+        ├── excel_inspector.py      # Excel metadata reader
         ├── calendar_maker.py       # Timeline parsing & Calendar CSV generator
         ├── dvs_parser.py           # DVS specification grammar parser
         ├── dvs_excel_writer.py     # DVS validation report writer
-        ├── dvs_consistency_checker.py  # LLM-powered DVS consistency checker
-        └── pdf_ecrf_compare.py     # Blank eCRF PDF comparison engine
+        ├── dvs_consistency_checker.py  # LLM-powered DVS consistency checker (MCP Sampling)
+        ├── db_spec_validator.py    # CDASH-based DB Spec validator
+        ├── cdash_reference_generator.py  # CDASH variables JSON generator
+        ├── pdf_ecrf_compare.py     # Blank eCRF PDF comparison engine
+        ├── sop_document_lister.py  # SOP Appendix signed-document lister
+        ├── sop_log_verifier.py     # SOP Log vs SOP Index PDF verifier
+        └── lab_normal_range_converter.py  # Lab Normal Range Excel to JSON converter
 ```
