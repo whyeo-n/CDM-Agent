@@ -1,0 +1,45 @@
+[project]
+name = "cdm-agent"
+version = "0.6.0"
+description = "CDM Agent — MCP server for automating Clinical Data Manager workflows."
+readme = "README.md"
+authors = [
+    { name = "Woohyeon Jeong", email = "whyeo.nooc@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "fastmcp>=3.1.0",
+    "mcp[cli]>=1.26.0",
+    "numpy>=2.4.3",
+    "openpyxl>=3.1.5",
+    "pandas>=3.0.1",
+    "pdfplumber>=0.11.9",
+    "pymupdf>=1.27.2.2",
+    "xlsxwriter>=3.2.9",
+]
+
+[project.scripts]
+cdm-agent = "cdm_agent.server:main"
+cdm-install-skills = "cdm_agent.install_skills:main"
+cdm-init = "cdm_agent.init_agent:main"
+
+[tool.uv]
+package = true
+
+[tool.hatch.build.targets.wheel]
+include = [
+    "src/cdm_agent/**/*.py",
+    "src/cdm_agent/templates/*.xlsx",
+    "src/cdm_agent/skills/**/*.md",
+    "src/cdm_agent/agent_configs/**/*.md",
+    "src/cdm_agent/data/*.json",
+]
+
+[build-system]
+requires = ["uv_build>=0.10.9,<0.11.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.8",
+]
