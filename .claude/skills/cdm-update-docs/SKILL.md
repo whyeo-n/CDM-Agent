@@ -12,7 +12,7 @@ Perform the following steps in order:
 
 ## Step 1 — Collect current tools
 
-Read `src/cdm_mcp_server/server.py` and extract all functions decorated with `@mcp.tool()`.
+Read `src/cdm-agent/server.py` and extract all functions decorated with `@mcp.tool()`.
 For each tool, collect:
 - Function name
 - Docstring (first line = short description)
